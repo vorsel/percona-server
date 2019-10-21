@@ -16,6 +16,7 @@
 #include "rpl_slave_commit_order_manager.h"
 
 #include "rpl_rli_pdb.h"     // Slave_worker
+#include "debug_sync.h"      // debug_sync_set_action
 
 Commit_order_manager::Commit_order_manager(uint32 worker_numbers)
   : m_rollback_trx(false), m_workers(worker_numbers), queue_head(QUEUE_EOF),
@@ -75,6 +76,14 @@ bool Commit_order_manager::wait_for_its_turn(Slave_worker *worker,
     THD *thd= worker->info_thd;
 
     DBUG_PRINT("info", ("Worker %lu is waiting for commit signal", worker->id));
+
+    DBUG_EXECUTE_IF("delay_slave_worker_0", {
+      if (worker->id == 1)
+      {
+        static const char act[]= "now SIGNAL signal.w1.wait_for_its_turn";
+        DBUG_ASSERT(!debug_sync_set_action(thd, STRING_WITH_LEN(act)));
+      }
+    });
 
     mysql_mutex_lock(&m_mutex);
     thd->ENTER_COND(cond, &m_mutex,
