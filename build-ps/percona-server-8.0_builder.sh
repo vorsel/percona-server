@@ -352,6 +352,8 @@ install_deps() {
 	    yum -y install zstd libzstd libzstd-devel
         fi
         if [ "x$RHEL" = "x6" ]; then
+            rm -f /usr/bin/cmake
+            cp -p /usr/bin/cmake3 /usr/bin/cmake
             yum -y install Percona-Server-shared-56
 	          yum -y install libevent2-devel
 	      else
@@ -487,7 +489,8 @@ build_srpm(){
     sed -i "/^%changelog/a * $(date "+%a") $(date "+%b") $(date "+%d") $(date "+%Y") Percona Development Team <info@percona.com> - ${VERSION}-${RELEASE}" percona-server.spec
     #
     cd ${WORKDIR}/rpmbuild/SOURCES
-    wget https://dl.bintray.com/boostorg/release/1.73.0/source/${BOOST_PACKAGE_NAME}.tar.gz
+    wget https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.gz
+    #wget https://dl.bintray.com/boostorg/release/1.73.0/source/${BOOST_PACKAGE_NAME}.tar.gz
     #wget http://downloads.sourceforge.net/boost/${BOOST_PACKAGE_NAME}.tar.gz
     #wget http://jenkins.percona.com/downloads/boost/${BOOST_PACKAGE_NAME}.tar.gz
     tar vxzf ${WORKDIR}/${TARFILE} --wildcards '*/build-ps/rpm/*.patch' --strip=3
@@ -604,14 +607,6 @@ build_rpm(){
 
     cd ${WORKDIR}
     source /opt/rh/devtoolset-8/enable
-
-    if [ $RHEL = 6 ]; then
-        if [ -f /usr/bin/cmake3 ]; then
-            mv /usr/bin/cmake /usr/bin/cmake3.0.2
-            ln -s /usr/bin/cmake3 /usr/bin/cmake
-        fi
-    fi
-
     #
     if [ ${ARCH} = x86_64 ]; then
         rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mecab ${MECAB_INSTALL_DIR}/usr" --rebuild rpmbuild/SRPMS/${SRCRPM}
